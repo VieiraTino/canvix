@@ -28,6 +28,9 @@ import { isChartKind, sanitizeChartLabels, sanitizeChartSeries, clampChartHole, 
 import { normalizeSpans } from '@/lib/rich-text'
 import { normalizeGrounding, visionGroundPrompt } from './vision-ground'
 import { DEFAULT_VISION_MODEL } from '@/lib/ai/provider'
+// [VDS] dono dos designs do MCP e ferramentas de pastas (patches/vds.patch)
+import { getMcpOwnerId } from '@/lib/vds/mcp-owner'
+import { buildVdsFolderTools } from '@/lib/vds/mcp-folder-tools'
 
 export const SERVER_VERSION = '0.6.1'
 
@@ -437,6 +440,7 @@ export function buildTools(deps: ToolDeps): ToolDef[] {
         const pages = (Array.isArray(template.pages) ? template.pages : []) as unknown as PageData[]
         const design = await db.design.create({
           data: {
+            ownerId: await getMcpOwnerId(), // [VDS]
             name,
             width: template.width,
             height: template.height,
@@ -449,7 +453,7 @@ export function buildTools(deps: ToolDeps): ToolDef[] {
       const width = clamp(asInt(args.width, 1080), 40, 8000)
       const height = clamp(asInt(args.height, 1080), 40, 8000)
       const design = await db.design.create({
-        data: { name, width, height, pages: [createPage()] as unknown as object, source: 'mcp' },
+        data: { ownerId: await getMcpOwnerId() /* [VDS] */, name, width, height, pages: [createPage()] as unknown as object, source: 'mcp' },
       })
       return ok({ design_id: design.id, name, width, height, pageCount: 1, editUrl: editUrl(design.id, origin) })
     },
@@ -508,7 +512,7 @@ export function buildTools(deps: ToolDeps): ToolDef[] {
         const spec = normalizeGeneratedDesign(parsed, width, height)
         const name = (asString(args.name, '') || asString(parsed.name, 'Generated design')).slice(0, 80) || 'Generated design'
         const design = await db.design.create({
-          data: { name, width: spec.width, height: spec.height, pages: spec.pages as unknown as object, source: 'ai:mcp' },
+          data: { ownerId: await getMcpOwnerId() /* [VDS] */, name, width: spec.width, height: spec.height, pages: spec.pages as unknown as object, source: 'ai:mcp' },
         })
         await recordUsage('assistant', 'zai', true)
         return ok({
@@ -1293,6 +1297,7 @@ export function buildTools(deps: ToolDeps): ToolDef[] {
     commentOnDesign,
     listComments,
     listFonts,
+    ...buildVdsFolderTools(), // [VDS] pastas
   ]
 }
 
