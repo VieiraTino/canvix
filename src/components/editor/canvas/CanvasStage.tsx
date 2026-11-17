@@ -9,6 +9,7 @@ import { gradientProps, computeSnap, clamp, pageSize, type GuideLine } from '@/l
 import { canvasBridge } from './canvas-bridge'
 import { ElementNode } from './element-node'
 import { Rulers } from './rulers'
+import { PageOutsideMask, useClipToPage } from '@/components/vds/PageOutsideMask' // [VDS] recortar à página
 import type { TextElement } from '@/lib/types'
 import { createStrokeElement } from '@/lib/types'
 import { CanvasContextMenu, type ContextMenuState } from './context-menu'
@@ -128,6 +129,7 @@ export default function CanvasStage() {
   const page = currentPageData({ pages, currentPage })
   // v0.18 (Wave 3): grid overlay prefs + per-page size override
   const showGrid = useEditorStore((s) => s.showGrid)
+  const clipToPage = useClipToPage() // [VDS] recortar à página
   const gridSize = useEditorStore((s) => s.gridSize)
   const { width: pw, height: ph } = useMemo(() => pageSize(page, width, height), [page, width, height])
   // v0.18 (Wave 3): the grid lines (page px) — memoised so typing doesn't rebuild
@@ -866,6 +868,8 @@ export default function CanvasStage() {
                   hideCell={editingCell && editingCell.id === el.id ? { row: editingCell.row, col: editingCell.col } : null}
                 />
               ))}
+              {/* [VDS] tapa o que sai fora da página (só visual, sem cliques) */}
+              {clipToPage && <PageOutsideMask width={pw} height={ph} />}
             </Group>
           </Layer>
           {/* v0.7 rendering performance: interaction chrome lives in its own

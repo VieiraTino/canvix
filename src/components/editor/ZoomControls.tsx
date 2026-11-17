@@ -1,7 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-import { ZoomIn, ZoomOut, Maximize, Check, ChevronsUpDown, Scan, Grid3x3, Magnet } from 'lucide-react'
+import { ZoomIn, ZoomOut, Maximize, Check, ChevronsUpDown, Scan, Grid3x3, Magnet, Crop } from 'lucide-react'
+import { setClipToPage, useClipToPage } from '@/components/vds/PageOutsideMask' // [VDS] recortar à página
 import { useEditorStore } from '@/store/editor-store'
 import { canvasBridge } from './canvas/canvas-bridge'
 import { cn } from '@/lib/utils'
@@ -18,6 +19,7 @@ export function ZoomControls() {
   // v0.18 (Wave 3): grid overlay + snap-to-grid
   const showGrid = useEditorStore((s) => s.showGrid)
   const setShowGrid = useEditorStore((s) => s.setShowGrid)
+  const clipToPage = useClipToPage() // [VDS] recortar à página
   const snapToGrid = useEditorStore((s) => s.snapToGrid)
   const setSnapToGrid = useEditorStore((s) => s.setSnapToGrid)
   const gridSize = useEditorStore((s) => s.gridSize)
@@ -74,6 +76,19 @@ export function ZoomControls() {
         title="Fit to screen"
       >
         <Maximize size={16} />
+      </button>
+      {/* [VDS] recortar à página: esconde o que sai fora, como no export */}
+      <button
+        className={cn(
+          'h-10 w-10 rounded-xl flex items-center justify-center hover:bg-white/10 hover:text-white',
+          clipToPage ? 'text-[#02C0CC] bg-white/10' : 'text-white/75'
+        )}
+        onClick={() => setClipToPage(!clipToPage)}
+        aria-label="Recortar à página"
+        aria-pressed={clipToPage}
+        title={clipToPage ? 'Mostrar o que sai fora da página' : 'Recortar à página (como no export)'}
+      >
+        <Crop size={16} />
       </button>
       {/* v0.18 (Wave 3): grid overlay toggle */}
       <button
