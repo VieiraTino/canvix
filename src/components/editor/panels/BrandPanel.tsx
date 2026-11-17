@@ -9,6 +9,8 @@ import { createImageElement } from '@/lib/types'
 import { FONTS } from '@/lib/editor-utils'
 import { toast } from '@/hooks/use-toast'
 import { cn } from '@/lib/utils'
+// [VDS] fontes carregadas no seletor do Brand kit (patches/vds.patch)
+import { useCustomFontFamilies } from '@/components/vds/useCustomFontFamilies'
 
 const BRAND_KEY = 'canvix:brandkit'
 
@@ -487,6 +489,7 @@ function fillColorOf(el: AnyElement): string | null {
 }
 
 function FontRow({ label, font, onChange, onApply }: { label: string; font: string; onChange: (f: string) => void; onApply: () => void }) {
+  const customFamilies = useCustomFontFamilies() // [VDS]
   return (
     <div className="flex items-center gap-2">
       <span className="text-[11px] text-white/50 w-14 shrink-0">{label}</span>
@@ -496,11 +499,23 @@ function FontRow({ label, font, onChange, onApply }: { label: string; font: stri
         className="flex-1 min-w-0 h-10 rounded-xl bg-white/[0.05] border border-white/10 text-white text-[13px] px-2 outline-none focus:border-[#7630D7] [color-scheme:dark]"
         aria-label={`Brand ${label} font`}
       >
-        {FONTS.map((f) => (
-          <option key={f.family} value={f.family}>
-            {f.label}
-          </option>
-        ))}
+        {/* [VDS] fontes carregadas primeiro, depois o catálogo */}
+        {customFamilies.length > 0 && (
+          <optgroup label="Your fonts">
+            {customFamilies.map((family) => (
+              <option key={`custom:${family}`} value={family}>
+                {family}
+              </option>
+            ))}
+          </optgroup>
+        )}
+        <optgroup label="Catalog">
+          {FONTS.map((f) => (
+            <option key={f.family} value={f.family}>
+              {f.label}
+            </option>
+          ))}
+        </optgroup>
       </select>
       <button
         className={cn('h-10 px-3 rounded-xl border border-white/12 bg-white/[0.05] hover:bg-[#7630D7] hover:border-transparent text-white text-[12px] font-semibold flex items-center gap-1 shrink-0 transition-colors')}
