@@ -454,9 +454,10 @@ export function Dashboard() {
         <div className="h-3" />
         {[
           { label: 'Home', icon: LayoutGrid, active: true },
-          { label: 'Templates', icon: LayoutTemplate, target: 'templates' },
+          // [VDS] mesma ordem da página: Projetos, Brand, Templates
           { label: 'Projects', icon: FolderOpen, target: 'recents' },
           { label: 'Brand', icon: BookMarked, target: 'brand' },
+          { label: 'Templates', icon: LayoutTemplate, target: 'templates' },
         ].map((item) => (
           <button
             key={item.label}
@@ -689,110 +690,6 @@ export function Dashboard() {
             </button>
           </div>
         </section>
-
-        {/* ── Templates ── */}
-        <section id="cv-templates" className="pt-12 scroll-mt-20">
-          <div className="flex items-center justify-between flex-wrap gap-3">
-            <h2 className="text-xl font-bold">Templates</h2>
-            <div className="flex items-center gap-2 flex-wrap">
-              <button
-                onClick={() => setCategory('all')}
-                className={cn(
-                  'inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-sm font-medium border transition-colors',
-                  category === 'all'
-                    ? 'bg-[#7630D7] text-white border-transparent'
-                    : 'bg-transparent border-white/12 text-white/60 hover:border-white/30 hover:text-white'
-                )}
-              >
-                <LayoutGrid size={14} /> All
-              </button>
-              {TEMPLATE_CATEGORIES.map((c) => {
-                const Icon = CATEGORY_ICONS[c.id] ?? LayoutGrid
-                return (
-                  <button
-                    key={c.id}
-                    onClick={() => setCategory(c.id)}
-                    className={cn(
-                      'inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-sm font-medium border transition-colors',
-                      category === c.id
-                        ? 'bg-[#7630D7] text-white border-transparent'
-                        : 'bg-transparent border-white/12 text-white/60 hover:border-white/30 hover:text-white'
-                    )}
-                  >
-                    <Icon size={14} /> {c.label}
-                  </button>
-                )
-              })}
-            </div>
-          </div>
-          <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6 gap-4">
-            {filteredTemplates.map((t) => (
-              <button
-                key={t.slug}
-                onClick={() => startFromTemplate(t)}
-                disabled={creating}
-                className="group text-left"
-                aria-label={`Open template ${t.name}`}
-              >
-                <div
-                  className="relative rounded-xl overflow-hidden border border-white/10 shadow-lg shadow-black/30 group-hover:shadow-xl group-hover:-translate-y-0.5 transition-all bg-[#0F1015]"
-                  style={{ aspectRatio: `${t.width} / ${t.height}` }}
-                >
-                  <DesignPreview page={t.pages[0]} width={t.width} height={t.height} />
-                  <div className="absolute inset-0 bg-[#7630D7]/0 group-hover:bg-[#7630D7]/15 transition-colors" />
-                  <span className="absolute top-2 right-2 h-6 w-6 rounded-full bg-[#7630D7] text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                    <Plus size={14} />
-                  </span>
-                  {/* v0.17 (Wave 2): smart templates offer CSV bulk fill */}
-                  {t.fields?.length ? (
-                    <span
-                      role="button"
-                      tabIndex={0}
-                      onClick={(e) => { e.stopPropagation(); setCsvTarget(t); setCsvText('') }}
-                      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.stopPropagation(); setCsvTarget(t); setCsvText('') } }}
-                      className="absolute top-2 left-2 h-7 px-2 rounded-full bg-[#02C0CC] text-[#083344] text-[10px] font-bold flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
-                      title="Bulk-fill with CSV"
-                    >
-                      <FileSpreadsheet size={12} /> CSV
-                    </span>
-                  ) : null}
-                </div>
-                <div className="mt-2 text-sm font-medium truncate text-white/85 group-hover:text-[#A78BFA] transition-colors">{t.name}</div>
-                <div className="text-xs text-white/40">{t.width} × {t.height}</div>
-              </button>
-            ))}
-          </div>
-        </section>
-
-        {/* ── Brand kit ── */}
-        <section id="cv-brand" className="pt-12 scroll-mt-20">
-          <h2 className="text-xl font-bold">Brand kit</h2>
-          <div className="mt-4 rounded-2xl border border-white/10 bg-[#16171D] p-5 flex flex-col sm:flex-row items-center gap-6">
-            <div className="flex gap-2">
-              {(['#7630D7', '#02C0CC', '#FF5C8A', '#1F142E', '#FFD166'] as const).map((c) => (
-                <span key={c} className="h-10 w-10 rounded-xl border border-white/15" style={{ background: c }} aria-label={`Brand color ${c}`} />
-              ))}
-            </div>
-            <div className="flex-1 text-center sm:text-left">
-              <div className="text-sm font-semibold">Set your brand colors &amp; fonts in the editor</div>
-              <div className="text-xs text-white/40 mt-0.5">Open any design → Brand tab. Saved locally, applied anywhere.</div>
-            </div>
-            <Button
-              variant="outline"
-              className="rounded-xl border-white/15 bg-transparent text-white hover:bg-white/10 hover:text-white"
-              onClick={() => {
-                const first = filteredDesigns[0] ?? null
-                if (first) void openDesign(first.id)
-                else toast({ title: 'Open a design first, then click the Brand tab' })
-              }}
-            >
-              Open editor
-            </Button>
-          </div>
-        </section>
-
-        {/* ── AI agents (MCP) ── */}
-        <McpCard />
 
         {/* ── v0.8: database setup banner (host switch / missing migration) ── */}
         {dbIssue && (
@@ -1034,6 +931,112 @@ export function Dashboard() {
             </div>
           )}
         </section>
+
+        {/* [VDS] Projetos e Brand kit primeiro, Templates depois (patches/vds.patch) */}
+        {/* ── Brand kit ── */}
+        <section id="cv-brand" className="pt-12 scroll-mt-20">
+          <h2 className="text-xl font-bold">Brand kit</h2>
+          <div className="mt-4 rounded-2xl border border-white/10 bg-[#16171D] p-5 flex flex-col sm:flex-row items-center gap-6">
+            <div className="flex gap-2">
+              {(['#7630D7', '#02C0CC', '#FF5C8A', '#1F142E', '#FFD166'] as const).map((c) => (
+                <span key={c} className="h-10 w-10 rounded-xl border border-white/15" style={{ background: c }} aria-label={`Brand color ${c}`} />
+              ))}
+            </div>
+            <div className="flex-1 text-center sm:text-left">
+              <div className="text-sm font-semibold">Set your brand colors &amp; fonts in the editor</div>
+              <div className="text-xs text-white/40 mt-0.5">Open any design → Brand tab. Saved locally, applied anywhere.</div>
+            </div>
+            <Button
+              variant="outline"
+              className="rounded-xl border-white/15 bg-transparent text-white hover:bg-white/10 hover:text-white"
+              onClick={() => {
+                const first = filteredDesigns[0] ?? null
+                if (first) void openDesign(first.id)
+                else toast({ title: 'Open a design first, then click the Brand tab' })
+              }}
+            >
+              Open editor
+            </Button>
+          </div>
+        </section>
+
+        {/* ── Templates ── */}
+        <section id="cv-templates" className="pt-12 scroll-mt-20">
+          <div className="flex items-center justify-between flex-wrap gap-3">
+            <h2 className="text-xl font-bold">Templates</h2>
+            <div className="flex items-center gap-2 flex-wrap">
+              <button
+                onClick={() => setCategory('all')}
+                className={cn(
+                  'inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-sm font-medium border transition-colors',
+                  category === 'all'
+                    ? 'bg-[#7630D7] text-white border-transparent'
+                    : 'bg-transparent border-white/12 text-white/60 hover:border-white/30 hover:text-white'
+                )}
+              >
+                <LayoutGrid size={14} /> All
+              </button>
+              {TEMPLATE_CATEGORIES.map((c) => {
+                const Icon = CATEGORY_ICONS[c.id] ?? LayoutGrid
+                return (
+                  <button
+                    key={c.id}
+                    onClick={() => setCategory(c.id)}
+                    className={cn(
+                      'inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-sm font-medium border transition-colors',
+                      category === c.id
+                        ? 'bg-[#7630D7] text-white border-transparent'
+                        : 'bg-transparent border-white/12 text-white/60 hover:border-white/30 hover:text-white'
+                    )}
+                  >
+                    <Icon size={14} /> {c.label}
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+          <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+            {filteredTemplates.map((t) => (
+              <button
+                key={t.slug}
+                onClick={() => startFromTemplate(t)}
+                disabled={creating}
+                className="group text-left"
+                aria-label={`Open template ${t.name}`}
+              >
+                <div
+                  className="relative rounded-xl overflow-hidden border border-white/10 shadow-lg shadow-black/30 group-hover:shadow-xl group-hover:-translate-y-0.5 transition-all bg-[#0F1015]"
+                  style={{ aspectRatio: `${t.width} / ${t.height}` }}
+                >
+                  <DesignPreview page={t.pages[0]} width={t.width} height={t.height} />
+                  <div className="absolute inset-0 bg-[#7630D7]/0 group-hover:bg-[#7630D7]/15 transition-colors" />
+                  <span className="absolute top-2 right-2 h-6 w-6 rounded-full bg-[#7630D7] text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                    <Plus size={14} />
+                  </span>
+                  {/* v0.17 (Wave 2): smart templates offer CSV bulk fill */}
+                  {t.fields?.length ? (
+                    <span
+                      role="button"
+                      tabIndex={0}
+                      onClick={(e) => { e.stopPropagation(); setCsvTarget(t); setCsvText('') }}
+                      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.stopPropagation(); setCsvTarget(t); setCsvText('') } }}
+                      className="absolute top-2 left-2 h-7 px-2 rounded-full bg-[#02C0CC] text-[#083344] text-[10px] font-bold flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                      title="Bulk-fill with CSV"
+                    >
+                      <FileSpreadsheet size={12} /> CSV
+                    </span>
+                  ) : null}
+                </div>
+                <div className="mt-2 text-sm font-medium truncate text-white/85 group-hover:text-[#A78BFA] transition-colors">{t.name}</div>
+                <div className="text-xs text-white/40">{t.width} × {t.height}</div>
+              </button>
+            ))}
+          </div>
+        </section>
+
+        {/* ── AI agents (MCP) ── */}
+        <McpCard />
+
         {/* ── Trash (v0.4 — soft-deleted designs) ── */}
         <section id="cv-trash" className="pt-12 scroll-mt-20">
           <button
