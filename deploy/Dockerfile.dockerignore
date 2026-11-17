@@ -1,0 +1,9 @@
+# [VDS] Ignorados no build (o BuildKit le este ficheiro por estar ao lado do Dockerfile).
+.git
+node_modules
+.next
+**/.env
+**/.env.*
+!.env.example
+deploy/nginx
+deploy/bin

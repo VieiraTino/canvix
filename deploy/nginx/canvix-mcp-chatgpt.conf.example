@@ -1,0 +1,28 @@
+# [VDS] MODELO. O ficheiro real e /etc/nginx/snippets/canvix-mcp-chatgpt.conf
+# (chmod 600, so root le). Tem o endereco secreto e o token: nunca vai para git.
+# Endereco secreto do MCP do Canvix para o ChatGPT (que so aceita OAuth ou
+# sem autenticacao). So passam os IPs dos conectores do ChatGPT, mantidos
+# por bin/update-openai-ips.sh (crontab de root: 17 4 * * 1).
+# Para trocar o segredo: gerar outro hex (openssl rand -hex 24), mudar a linha
+# location, nginx -t e recarregar; depois atualizar o URL no ChatGPT.
+location = /mcp-<SEGREDO_HEX> {
+    include /etc/nginx/snippets/openai-connectors-allow.conf;
+    allow 127.0.0.1;
+    deny all;
+
+    limit_req zone=canvix_mcp burst=20 nodelay;
+    limit_except POST GET DELETE { deny all; }
+    client_max_body_size 2m;
+    access_log /var/log/nginx/canva-mcp.log canvix_mcp;
+
+    proxy_pass http://127.0.0.1:8020/api/mcp;
+    proxy_http_version 1.1;
+    proxy_set_header Host $host;
+    proxy_set_header Authorization "Bearer <CANVIX_MCP_TOKEN>";
+    proxy_set_header Origin "";
+    proxy_set_header Cookie "";
+    proxy_set_header X-Forwarded-For $remote_addr;
+    proxy_set_header X-Forwarded-Proto https;
+    proxy_buffering off;
+    proxy_read_timeout 300s;
+}

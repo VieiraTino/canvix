@@ -1,0 +1,39 @@
+# [VDS] Canvix da Viagem de Sonho. Correr dentro desta pasta:
+#   docker compose up -d --build
+# Os valores vem de deploy/.env (fora de git; ver .env.example).
+# O nome do projeto fixa os volumes (canvix_pgdata): nao mudar.
+name: canvix
+services:
+  app:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
+    image: canvix-app:vds
+    restart: unless-stopped
+    depends_on:
+      db: { condition: service_healthy }
+    environment:
+      DATABASE_URL: postgresql://canvix:${POSTGRES_PASSWORD}@db:5432/canvix?sslmode=disable
+      CANVIX_MCP_TOKEN: ${CANVIX_MCP_TOKEN}
+      CANVIX_ADMIN_USERS: ${CANVIX_ADMIN_USERS}
+      CANVIX_MCP_OWNER: ${CANVIX_MCP_OWNER}
+      CANVIX_PUBLIC_URL: ${CANVIX_PUBLIC_URL}
+    ports:
+      - "127.0.0.1:8020:3000"
+    volumes:
+      - ./fonts-local.conf:/etc/fonts/local.conf:ro
+  db:
+    image: postgres:17
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: canvix
+      POSTGRES_DB: canvix
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U canvix -d canvix"]
+      interval: 5s
+      retries: 10
+volumes:
+  pgdata:

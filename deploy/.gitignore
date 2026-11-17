@@ -1,0 +1,5 @@
+# [VDS] segredos e fontes com licenca ficam so no servidor
+.env
+!.env.example
+fonts/*
+!fonts/LEIA-ME.md
