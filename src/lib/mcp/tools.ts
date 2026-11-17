@@ -32,6 +32,7 @@ import { DEFAULT_VISION_MODEL } from '@/lib/ai/provider'
 import { getMcpOwnerId } from '@/lib/vds/mcp-owner'
 import { buildVdsFolderTools } from '@/lib/vds/mcp-folder-tools'
 import { buildVdsExportTools } from '@/lib/vds/mcp-export-tools'
+import { buildVdsDesignTools } from '@/lib/vds/mcp-design-tools'
 
 export const SERVER_VERSION = '0.6.1'
 
@@ -1299,6 +1300,7 @@ export function buildTools(deps: ToolDeps): ToolDef[] {
     listComments,
     listFonts,
     ...buildVdsFolderTools(), // [VDS] pastas
+    ...buildVdsDesignTools(), // [VDS] duplicate_design
     ...buildVdsExportTools(deps.req), // [VDS] links de exportação (TryPost)
   ]
 }
