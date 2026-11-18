@@ -12,9 +12,12 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 const queryRaw = vi.hoisted(() => vi.fn())
 const mediaDelete = vi.hoisted(() => vi.fn())
 const mediaUpdate = vi.hoisted(() => vi.fn())
+// [VDS] findUnique (nome do upload novo) e updateMany (repor na biblioteca)
+const mediaFindUnique = vi.hoisted(() => vi.fn())
+const mediaUpdateMany = vi.hoisted(() => vi.fn())
 const dbMock = vi.hoisted(() => ({
   $queryRawUnsafe: queryRaw,
-  media: { delete: mediaDelete, update: mediaUpdate },
+  media: { delete: mediaDelete, update: mediaUpdate, findUnique: mediaFindUnique, updateMany: mediaUpdateMany },
 }))
 vi.mock('@/lib/db', () => ({ db: dbMock }))
 
@@ -30,6 +33,8 @@ beforeEach(() => {
   vi.clearAllMocks()
   mediaDelete.mockResolvedValue({ id: 'gone' })
   mediaUpdate.mockResolvedValue({ id: 'kept' })
+  mediaFindUnique.mockResolvedValue({ name: 'foto-nova.jpg' })
+  mediaUpdateMany.mockResolvedValue({ count: 1 })
 })
 
 function putReq(id: string, expectedSize: number) {
@@ -58,6 +63,11 @@ describe('PUT /api/media/[id] finalize (v0.14 D1)', () => {
     expect(await res.json()).toEqual({ id: 'm-old', deduplicated: true })
     expect(mediaDelete).toHaveBeenCalledWith({ where: { id: 'm-new' } })
     expect(mediaUpdate).not.toHaveBeenCalled()
+    // [VDS] se o antigo estava fora da biblioteca, volta com o nome do upload novo
+    expect(mediaUpdateMany).toHaveBeenCalledWith({
+      where: { id: 'm-old', keepInLibrary: false },
+      data: { keepInLibrary: true, name: 'foto-nova.jpg' },
+    })
   })
 
   it('no dupe: finalizes with contentHash + keepInLibrary', async () => {

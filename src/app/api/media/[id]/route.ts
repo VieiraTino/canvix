@@ -93,9 +93,22 @@ async function __canvix_put(req: NextRequest, { params }: { params: Promise<{ id
       anonKey,
     )
     if (dupe.length) {
+      // [VDS] o ficheiro antigo pode ter sido removido da biblioteca (keepInLibrary
+      // false) ou ter vindo de uma importação com outro nome: voltar a carregá-lo
+      // repõe-no na biblioteca com o nome do upload novo, senão "desaparece"
+      let freshName: string | null = null
+      try {
+        freshName = (await db.media.findUnique({ where: { id }, select: { name: true } }))?.name ?? null
+      } catch { /* sem nome: fica o antigo */ }
       // identical bytes already in this attribution's library — the new
       // row is redundant: point the caller at the old id and drop it
       await db.media.delete({ where: { id } }).catch(() => { /* already gone */ })
+      try {
+        await db.media.updateMany({
+          where: { id: dupe[0].id, keepInLibrary: false },
+          data: { keepInLibrary: true, ...(freshName ? { name: freshName } : {}) },
+        })
+      } catch { /* já não existe */ }
       return NextResponse.json({ id: dupe[0].id, deduplicated: true })
     }
 
