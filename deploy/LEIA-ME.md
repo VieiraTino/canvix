@@ -23,6 +23,14 @@ git log --oneline v0.23.1..vds
   embutidas; rota `/api/vds/export`. Para o TryPost ir buscar a imagem.
 - **MCP: `duplicate_design`.** Cópia independente de um design (ex.: um
   modelo), opcionalmente já dentro de uma pasta, sem tocar no original.
+- **MCP: Brand.** `list_brand_assets` (cores, paletas, fontes e logos dos
+  brand kits da conta `CANVIX_MCP_OWNER`, com miniaturas opcionais) e
+  `add_brand_asset` (põe um logo num design com o ficheiro original, sem
+  recomprimir e sem cantos arredondados).
+- **Uploads sem fontes.** A biblioteca de Uploads deixa de listar as fontes
+  carregadas (apagá-las lá tirava-as do seletor de fontes).
+- **Imagens sem cantos arredondados por omissão** e controlo "Corner
+  radius" no menu Adjust das imagens.
 - **Editor: "Recortar à página".** Botão na barra de zoom (ligado por
   omissão, preferência em `localStorage` `vds:clipToPage`). Tapa com a cor de
   fundo do editor o que sai fora da página; só visual, não apanha cliques e

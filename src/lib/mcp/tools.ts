@@ -33,6 +33,8 @@ import { getMcpOwnerId } from '@/lib/vds/mcp-owner'
 import { buildVdsFolderTools } from '@/lib/vds/mcp-folder-tools'
 import { buildVdsExportTools } from '@/lib/vds/mcp-export-tools'
 import { buildVdsDesignTools } from '@/lib/vds/mcp-design-tools'
+import { buildVdsBrandTools } from '@/lib/vds/mcp-brand-tools'
+import { isOwnerFontFamily, loadOwnerFontFamilies } from '@/lib/vds/owner-fonts'
 
 export const SERVER_VERSION = '0.6.1'
 
@@ -491,8 +493,10 @@ export function buildTools(deps: ToolDeps): ToolDef[] {
 
       const width = clamp(asInt(args.width, 1080), 200, 8000)
       const height = clamp(asInt(args.height, 1080), 200, 8000)
-      const fontList = FONTS.slice(0, 24)
-        .map((f) => (typeof f === "string" ? f : f.family))
+      // [VDS] as fontes carregadas (marca) entram primeiro na lista dada à IA
+      const ownerFonts = await loadOwnerFontFamilies()
+      const fontList = [...ownerFonts, ...FONTS.slice(0, 24)
+        .map((f) => (typeof f === "string" ? f : f.family))]
         .join(', ')
 
       const system = [
@@ -577,7 +581,8 @@ export function buildTools(deps: ToolDeps): ToolDef[] {
       const text = asString(args.text).slice(0, 400)
       if (!text.trim()) return fail('text must not be empty.')
       const fontName = asString(args.fontFamily, '')
-      const font = FONTS.some((f) => (typeof f === "string" ? f : f.family) === fontName) ? fontName : 'Poppins'
+      const ownerFonts = await loadOwnerFontFamilies() // [VDS] aceita também as fontes carregadas
+      const font = FONTS.some((f) => (typeof f === "string" ? f : f.family) === fontName) || ownerFonts.includes(fontName) ? fontName : 'Poppins'
       return mutateDesign(designId, (pages, w, h) => {
         const pageIndex = clamp(asInt(args.page, 0), 0, pages.length - 1)
         const page = pageAt(pages, pageIndex)
@@ -940,6 +945,7 @@ export function buildTools(deps: ToolDeps): ToolDef[] {
       const elementId = asString(args.element_id)
       const patchIn = (args.patch && typeof args.patch === 'object' ? args.patch : {}) as Record<string, unknown>
       if (!Object.keys(patchIn).length) return fail('patch must contain at least one property.')
+      await loadOwnerFontFamilies() // [VDS] o sanitizePatch aceita as fontes carregadas
       return mutateDesign(designId, (pages, w, h) => {
         const pageIndex = clamp(asInt(args.page, 0), 0, pages.length - 1)
         const page = pageAt(pages, pageIndex)
@@ -1254,10 +1260,13 @@ export function buildTools(deps: ToolDeps): ToolDef[] {
 
   const listFonts: ToolDef = {
     name: 'list_fonts',
-    description: 'List the font families available in the editor (use with add_text / update_element).',
+    description: 'List the font families available in the editor (use with add_text / update_element). uploaded_fonts are the brand fonts uploaded to this account (e.g. the Brand kit heading/body fonts) and are listed first in fonts.',
     inputSchema: { type: 'object', properties: {} },
     handler: async () => {
-      return ok({ count: FONTS.length, fonts: FONTS.map((f) => (typeof f === "string" ? f : f.family)) })
+      // [VDS] fontes carregadas primeiro, depois o catálogo
+      const uploaded = await loadOwnerFontFamilies()
+      const catalog = FONTS.map((f) => (typeof f === "string" ? f : f.family)).filter((f) => !uploaded.includes(f))
+      return ok({ count: uploaded.length + catalog.length, uploaded_fonts: uploaded, fonts: [...uploaded, ...catalog] })
     },
   }
 
@@ -1301,6 +1310,7 @@ export function buildTools(deps: ToolDeps): ToolDef[] {
     listFonts,
     ...buildVdsFolderTools(), // [VDS] pastas
     ...buildVdsDesignTools(), // [VDS] duplicate_design
+    ...buildVdsBrandTools(mutateDesign), // [VDS] list_brand_assets, add_brand_asset
     ...buildVdsExportTools(deps.req), // [VDS] links de exportação (TryPost)
   ]
 }
@@ -1413,7 +1423,7 @@ function sanitizePatch(patch: Record<string, unknown>, el: AnyElement, pageW: nu
         break
       case 'fontFamily': {
         const f = asString(value, '')
-        out.fontFamily = FONTS.some((x) => (typeof x === "string" ? x : x.family) === f) ? f : 'Inter'
+        out.fontFamily = FONTS.some((x) => (typeof x === "string" ? x : x.family) === f) || isOwnerFontFamily(f) ? f : 'Inter' // [VDS] + fontes carregadas
         break
       }
       case 'align':
@@ -1506,7 +1516,7 @@ function normalizeGeneratedDesign(spec: Record<string, unknown>, width: number, 
             y: clamp(asNumber(el.y, 60), 0, height),
             width: clamp(asNumber(el.width, width - 120), 40, width * 1.2),
             fontSize: clamp(asNumber(el.fontSize, 40), 8, 300),
-            fontFamily: FONTS.some((f) => (typeof f === "string" ? f : f.family) === asString(el.fontFamily, '')) ? asString(el.fontFamily) : 'Poppins',
+            fontFamily: FONTS.some((f) => (typeof f === "string" ? f : f.family) === asString(el.fontFamily, '')) || isOwnerFontFamily(asString(el.fontFamily, '')) ? asString(el.fontFamily) : 'Poppins', // [VDS] + fontes carregadas
             bold: asBool(el.bold, false),
             fill: asHex(el.fill, '#1F2226'),
             align: asEnum(el.align, ['left', 'center', 'right'] as const, 'center'),
