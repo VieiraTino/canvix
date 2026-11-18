@@ -1041,6 +1041,8 @@ function ImageAdjustPopover({ el, ids }: { el: ImageElement; ids: string[] }) {
       <SliderRow label="Brightness" value={el.brightness ?? 0} min={-100} max={100} step={1} onChange={(v) => updateLive(ids, { brightness: v })} onCommit={() => update(ids, { brightness: el.brightness ?? 0 })} />
       <SliderRow label="Contrast" value={el.contrast ?? 0} min={-100} max={100} step={1} onChange={(v) => updateLive(ids, { contrast: v })} onCommit={() => update(ids, { contrast: el.contrast ?? 0 })} />
       <SliderRow label="Saturation" value={el.saturation ?? 0} min={-100} max={100} step={1} onChange={(v) => updateLive(ids, { saturation: v })} onCommit={() => update(ids, { saturation: el.saturation ?? 0 })} />
+      {/* [VDS] cantos arredondados da imagem (antes não havia controlo; ignorado com máscara) */}
+      <SliderRow label="Corner radius" value={el.radius ?? 0} min={0} max={Math.max(1, Math.round(Math.min(el.width, el.height) / 2))} step={1} onChange={(v) => updateLive(ids, { radius: v })} onCommit={() => update(ids, { radius: el.radius ?? 0 })} />
       <div className="flex gap-1.5 mt-1 border-t border-white/[0.08] pt-2.5">
         <TBtn onClick={() => update(ids, { flipH: !el.flipH })} dataActive={el.flipH} title="Flip horizontal" ariaLabel="Flip horizontal"><FlipHorizontal size={14} /></TBtn>
         <TBtn onClick={() => update(ids, { flipV: !el.flipV })} dataActive={el.flipV} title="Flip vertical" ariaLabel="Flip vertical"><FlipVertical size={14} /></TBtn>

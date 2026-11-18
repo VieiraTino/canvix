@@ -743,7 +743,7 @@ export function createImageElement(
     ...baseElement('image', init),
     type: 'image',
     src,
-    radius: 12,
+    radius: 0, // [VDS] sem cantos arredondados por omissão (comia as pontas dos logos); era 12
     naturalWidth,
     naturalHeight,
     flipH: false,
