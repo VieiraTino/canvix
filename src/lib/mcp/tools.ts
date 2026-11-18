@@ -34,6 +34,7 @@ import { buildVdsFolderTools } from '@/lib/vds/mcp-folder-tools'
 import { buildVdsExportTools } from '@/lib/vds/mcp-export-tools'
 import { buildVdsDesignTools } from '@/lib/vds/mcp-design-tools'
 import { buildVdsBrandTools } from '@/lib/vds/mcp-brand-tools'
+import { buildVdsLayerTools } from '@/lib/vds/mcp-layer-tools'
 import { isOwnerFontFamily, loadOwnerFontFamilies } from '@/lib/vds/owner-fonts'
 
 export const SERVER_VERSION = '0.6.1'
@@ -1311,6 +1312,7 @@ export function buildTools(deps: ToolDeps): ToolDef[] {
     ...buildVdsFolderTools(), // [VDS] pastas
     ...buildVdsDesignTools(), // [VDS] duplicate_design
     ...buildVdsBrandTools(mutateDesign), // [VDS] list_brand_assets, add_brand_asset
+    ...buildVdsLayerTools(mutateDesign), // [VDS] arrange_element (ordem das camadas)
     ...buildVdsExportTools(deps.req), // [VDS] links de exportação (TryPost)
   ]
 }

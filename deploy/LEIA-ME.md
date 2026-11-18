@@ -26,7 +26,10 @@ git log --oneline v0.23.1..vds
 - **MCP: Brand.** `list_brand_assets` (cores, paletas, fontes e logos dos
   brand kits da conta `CANVIX_MCP_OWNER`, com miniaturas opcionais) e
   `add_brand_asset` (põe um logo num design com o ficheiro original, sem
-  recomprimir e sem cantos arredondados).
+  recomprimir e sem cantos arredondados). As fontes carregadas são aceites
+  por `list_fonts`, `add_text`, `update_element` e `generate_design`.
+- **MCP: `arrange_element`.** Ordem das camadas (frente, trás, subir,
+  descer, acima/abaixo de outro elemento, índice exato).
 - **Uploads sem fontes.** A biblioteca de Uploads deixa de listar as fontes
   carregadas (apagá-las lá tirava-as do seletor de fontes).
 - **Imagens sem cantos arredondados por omissão** e controlo "Corner
