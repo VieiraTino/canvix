@@ -10,6 +10,8 @@ import { canvasBridge } from './canvas-bridge'
 import { ElementNode } from './element-node'
 import { Rulers } from './rulers'
 import { PageOutsideMask, useClipToPage } from '@/components/vds/PageOutsideMask' // [VDS] recortar à página
+import { remeasureTexts } from '@/components/vds/remeasureTexts' // [VDS] texto deslocado ao recarregar
+import { loadCustomFonts } from '@/lib/fonts/loader'
 import type { TextElement } from '@/lib/types'
 import { createStrokeElement } from '@/lib/types'
 import { CanvasContextMenu, type ContextMenuState } from './context-menu'
@@ -78,8 +80,13 @@ export default function CanvasStage() {
   // v0.17 (Wave 2): on-demand webfonts — Konva doesn't redraw when a
   // webfont settles, so the loader broadcasts and we repaint the stage.
   useEffect(() => {
-    const onFonts = () => stageRef.current?.batchDraw()
+    // [VDS] remedir os textos antes de redesenhar: o Konva guarda as medidas da
+    // fonte de recurso, e só pintar de novo deixava o texto deslocado
+    const onFonts = () => remeasureTexts(stageRef.current)
     window.addEventListener('canvix:fonts-loaded', onFonts)
+    // [VDS] as fontes carregadas (Brand) só eram registadas ao abrir o seletor
+    // de fontes ou o separador Brand; registá-las logo ao abrir o editor
+    void loadCustomFonts()
     return () => window.removeEventListener('canvix:fonts-loaded', onFonts)
   }, [])
   /** v0.7: mirror of `guides` for cheap equality checks during drag */
