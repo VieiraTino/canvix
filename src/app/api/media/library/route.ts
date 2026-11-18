@@ -37,8 +37,11 @@ async function __canvix_get(req: NextRequest) {
     const items = await db.$queryRawUnsafe<
       { id: string; mime: string; name: string | null; size: number; createdAt: Date }[]
     >(
+      // [VDS] as fontes carregadas também são Media com keepInLibrary; ficam fora
+      // da lista de Uploads para não serem apagadas por engano (apagar aqui
+      // desligava-as do seletor de fontes). A quota continua a contá-las.
       `SELECT id, mime, name, size, "createdAt" FROM "Media"
-        WHERE "keepInLibrary" = true AND "finalizedAt" IS NOT NULL AND (
+        WHERE "keepInLibrary" = true AND "finalizedAt" IS NOT NULL AND mime NOT LIKE 'font/%' AND (
           ("ownerId" = $1 AND $1 IS NOT NULL) OR ("anonKey" = $2 AND $2 IS NOT NULL))
         ORDER BY "createdAt" DESC LIMIT ${LIST_LIMIT}`,
       ownerId,
