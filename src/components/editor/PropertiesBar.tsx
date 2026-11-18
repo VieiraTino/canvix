@@ -916,8 +916,9 @@ function PositionPopover({ ids, count, element }: { ids: string[]; count: number
         <div className="border-t border-white/[0.08] pt-2">
           <div className="text-[10px] font-semibold text-white/45 uppercase tracking-wide mb-1.5">Advanced</div>
           <div className="grid grid-cols-3 gap-1.5 mb-1.5">
-            <NumField label="W" value={W} onCommit={(v) => setSize(ratio ? v * (H / W) : v, ratio ? v * (H / W) : H)} />
-            <NumField label="H" value={H} onCommit={(v) => setSize(ratio ? v * (W / H) : W, ratio ? v * (W / H) : v)} />
+            {/* [VDS] com Ratio, W muda a largura e a altura acompanha (e vice-versa); antes punha os dois iguais */}
+            <NumField label="W" value={W} onCommit={(v) => setSize(v, ratio && W ? v * (H / W) : H)} />
+            <NumField label="H" value={H} onCommit={(v) => setSize(ratio && H ? v * (W / H) : W, v)} />
             <button
               className="flex flex-col items-center justify-center gap-0.5 rounded-lg border border-white/10 text-white/75 hover:bg-white/[0.09] text-[10px] font-medium py-1"
               onClick={() => setRatio(!ratio)}

@@ -1,6 +1,7 @@
 'use client'
 
 import { useRef, useState, ReactNode } from 'react'
+import { createPortal } from 'react-dom'
 import { cn } from '@/lib/utils'
 
 /** shared anchored popover for the context toolbar (canva .cv-pop style) */
@@ -21,12 +22,12 @@ export function ToolbarPopover({
 
   const toggle = () => {
     if (!open) {
+      // [VDS] menus sempre encostados à direita do ecrã, logo abaixo do header
+      // do editor (como um painel), em vez de ancorados ao botão
+      const header = document.querySelector('header')?.getBoundingClientRect()
       const r = ref.current?.getBoundingClientRect()
-      if (r) {
-        const x = Math.min(r.left, window.innerWidth - width - 12)
-        const y = r.bottom + 6 > window.innerHeight - 300 ? Math.max(8, r.top - 306) : r.bottom + 6
-        setPos({ x, y })
-      }
+      const y = Math.round((header?.bottom ?? r?.bottom ?? 56) + 8)
+      setPos({ x: 12, y })
     }
     setOpen(!open)
   }
@@ -34,14 +35,21 @@ export function ToolbarPopover({
   return (
     <div ref={ref} className="relative shrink-0">
       <span onClick={toggle}>{trigger(open)}</span>
-      {open && pos && (
+      {/* [VDS] o menu era absolute dentro da barra (que tem overflow-x:auto) com
+          coordenadas do ecrã: ficava fora do sítio e cortado, nunca se via.
+          Agora vai para o body (portal) com position fixed. */}
+      {open && pos && typeof document !== 'undefined' && createPortal(
         <>
           <div className="fixed inset-0 z-[60]" onClick={() => setOpen(false)} onContextMenu={(e) => { e.preventDefault(); setOpen(false) }} />
-          <div className="cv-pop" style={{ left: pos.x, top: pos.y, minWidth: width }}>
+          <div
+            className="cv-pop"
+            style={{ position: 'fixed', zIndex: 61, right: pos.x, top: pos.y, minWidth: width, maxWidth: 'calc(100vw - 24px)', maxHeight: `calc(100vh - ${pos.y + 12}px)`, overflowY: 'auto' }}
+          >
             {title && <div className="text-[12px] font-bold text-white/90 mb-2.5">{title}</div>}
             {children}
           </div>
-        </>
+        </>,
+        document.body,
       )}
     </div>
   )

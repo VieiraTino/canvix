@@ -42,6 +42,14 @@ git log --oneline v0.23.1..vds
   (à página ou ao conjunto) e `distribute_elements`.
 - **Uploads sem fontes.** A biblioteca de Uploads deixa de listar as fontes
   carregadas (apagá-las lá tirava-as do seletor de fontes).
+- **Uploads repetidos voltam à biblioteca.** Carregar de novo um ficheiro
+  igual a um removido da biblioteca repõe-no (antes ficava escondido).
+- **Fontes carregadas ao abrir o editor** e textos remedidos quando uma
+  fonte chega (antes o texto aparecia deslocado ao recarregar).
+- **Menus da barra de cima visíveis.** Os popovers (Position, Adjust, …)
+  vão para o body com position fixed, encostados à direita do ecrã, logo
+  abaixo do header; antes ficavam cortados pela barra.
+  Em Position → Advanced, W/H com "Ratio" mantêm a proporção.
 - **Imagens sem cantos arredondados por omissão** e controlo "Corner
   radius" no menu Adjust das imagens.
 - **Editor: "Recortar à página".** Botão na barra de zoom (ligado por
