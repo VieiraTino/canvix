@@ -35,6 +35,11 @@ import { buildVdsExportTools } from '@/lib/vds/mcp-export-tools'
 import { buildVdsDesignTools } from '@/lib/vds/mcp-design-tools'
 import { buildVdsBrandTools } from '@/lib/vds/mcp-brand-tools'
 import { buildVdsLayerTools } from '@/lib/vds/mcp-layer-tools'
+import { buildVdsUploadTools } from '@/lib/vds/mcp-upload-tools'
+import { buildVdsPageTools } from '@/lib/vds/mcp-page-tools'
+import { buildVdsResizeTools } from '@/lib/vds/mcp-resize-tools'
+import { buildVdsArrangeTools } from '@/lib/vds/mcp-arrange-tools'
+import { inlinePageImages } from '@/lib/vds/export-link'
 import { isOwnerFontFamily, loadOwnerFontFamilies } from '@/lib/vds/owner-fonts'
 
 export const SERVER_VERSION = '0.6.1'
@@ -1067,7 +1072,8 @@ export function buildTools(deps: ToolDeps): ToolDef[] {
         }
         const pngs: { index: number; data: string }[] = []
         for (const i of indices.slice(0, 3)) {
-          const svg = exportPageToSVG(pages[i], design.width, design.height)
+          // [VDS] embute as imagens /api/media (Uploads) e https, senão saíam em branco
+          const svg = exportPageToSVG(await inlinePageImages(pages[i]), design.width, design.height)
           const png = await sharp(Buffer.from(svg), { density: 96 })
             .resize({ width: Math.min(2000, design.width), withoutEnlargement: design.width <= 2000 })
             .png()
@@ -1313,6 +1319,10 @@ export function buildTools(deps: ToolDeps): ToolDef[] {
     ...buildVdsDesignTools(), // [VDS] duplicate_design
     ...buildVdsBrandTools(mutateDesign), // [VDS] list_brand_assets, add_brand_asset
     ...buildVdsLayerTools(mutateDesign), // [VDS] arrange_element (ordem das camadas)
+    ...buildVdsUploadTools(mutateDesign), // [VDS] list_uploads, add_upload
+    ...buildVdsPageTools(mutateDesign), // [VDS] add/duplicate/delete/move_page
+    ...buildVdsResizeTools(), // [VDS] resize_design
+    ...buildVdsArrangeTools(mutateDesign), // [VDS] group/ungroup/align/distribute
     ...buildVdsExportTools(deps.req), // [VDS] links de exportação (TryPost)
   ]
 }

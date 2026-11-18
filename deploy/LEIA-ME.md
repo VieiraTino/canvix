@@ -30,6 +30,16 @@ git log --oneline v0.23.1..vds
   por `list_fonts`, `add_text`, `update_element` e `generate_design`.
 - **MCP: `arrange_element`.** Ordem das camadas (frente, trás, subir,
   descer, acima/abaixo de outro elemento, índice exato).
+- **MCP: Uploads.** `list_uploads` (imagens da biblioteca de Uploads, com
+  miniaturas opcionais) e `add_upload` (insere com o original,
+  `/api/media/<id>`; `as_background` cobre a página, vai para trás e
+  bloqueia). O `export_design` em PNG passa a embutir estas imagens.
+- **MCP: páginas.** `add_page`, `duplicate_page` (ids novos), `delete_page`,
+  `move_page`, para carrosséis.
+- **MCP: `resize_design`.** Magic resize do editor; por omissão cria uma
+  cópia no tamanho novo, na mesma pasta. Presets de redes sociais.
+- **MCP: arrumação.** `group_elements`, `ungroup_element`, `align_elements`
+  (à página ou ao conjunto) e `distribute_elements`.
 - **Uploads sem fontes.** A biblioteca de Uploads deixa de listar as fontes
   carregadas (apagá-las lá tirava-as do seletor de fontes).
 - **Imagens sem cantos arredondados por omissão** e controlo "Corner

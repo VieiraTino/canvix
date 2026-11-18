@@ -127,7 +127,7 @@ async function remoteToDataUrl(src: string): Promise<string | null> {
 }
 
 /** cópia da página com as imagens embutidas (as que falharem ficam como estavam) */
-async function inlinePageImages(page: PageData): Promise<PageData> {
+export async function inlinePageImages(page: PageData): Promise<PageData> {
   const copy = structuredClone(page)
   const srcs = new Set<string>()
   collectImageSrcs(copy, srcs)
