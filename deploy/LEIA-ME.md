@@ -28,6 +28,10 @@ git log --oneline v0.23.1..vds
   `add_brand_asset` (põe um logo num design com o ficheiro original, sem
   recomprimir e sem cantos arredondados). As fontes carregadas são aceites
   por `list_fonts`, `add_text`, `update_element` e `generate_design`.
+- **MCP: respostas pequenas no `export_design`.** O `png` é uma
+  pré-visualização JPEG de 800 px e o `json`/`svg` trocam as imagens
+  embutidas por `omitted:<tipo>;<tamanho>`. Antes chegavam a 2,5 MB e
+  5,9 MB e o ChatGPT terminava a conversa ("duração máxima").
 - **MCP: `arrange_element`.** Ordem das camadas (frente, trás, subir,
   descer, acima/abaixo de outro elemento, índice exato).
 - **MCP: Uploads.** `list_uploads` (imagens da biblioteca de Uploads, com

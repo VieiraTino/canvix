@@ -40,6 +40,7 @@ import { buildVdsPageTools } from '@/lib/vds/mcp-page-tools'
 import { buildVdsResizeTools } from '@/lib/vds/mcp-resize-tools'
 import { buildVdsArrangeTools } from '@/lib/vds/mcp-arrange-tools'
 import { inlinePageImages } from '@/lib/vds/export-link'
+import { PREVIEW_WIDTH, previewJpeg, stripEmbeddedData } from '@/lib/vds/mcp-compact'
 import { isOwnerFontFamily, loadOwnerFontFamilies } from '@/lib/vds/owner-fonts'
 
 export const SERVER_VERSION = '0.6.1'
@@ -1029,7 +1030,7 @@ export function buildTools(deps: ToolDeps): ToolDef[] {
   const exportDesign: ToolDef = {
     name: 'export_design',
     description:
-      'Export a design page. format "svg" returns true vector SVG (text uses font-family references — viewers fall back gracefully); "png" rasterizes server-side (system fonts) and returns an image block; "json" returns the full editable document. page defaults to 0; use page "all" for every page (svg/json only).',
+      'Export a design page. format "png" returns a small preview image (800px JPEG) so you can look at the design — for a full-quality file use export_design_url; "svg" returns vector SVG (text uses font-family references); "json" returns the editable document. In svg/json, embedded image data is replaced by "omitted:<type>;<size>" to keep replies small. page defaults to 0; use page "all" for every page (svg/json only).',
     inputSchema: {
       type: 'object',
       properties: {
@@ -1052,12 +1053,13 @@ export function buildTools(deps: ToolDeps): ToolDef[] {
           ? pages.map((_, i) => i)
           : [clamp(typeof pageArg === 'number' ? Math.round(pageArg) : asInt(pageArg, 0), 0, pages.length - 1)]
 
+      // [VDS] sem os data URLs das imagens (chegavam a 5,9 MB e o ChatGPT cortava a conversa)
       if (format === 'json') {
-        return ok({ design_id: designId, name: design.name, width: design.width, height: design.height, pages: pages.filter((_, i) => indices.includes(i)) })
+        return ok({ design_id: designId, name: design.name, width: design.width, height: design.height, pages: stripEmbeddedData(pages.filter((_, i) => indices.includes(i))), note: 'Embedded image data is replaced by "omitted:<type>;<size>" to keep the reply small; leave those src values unchanged.' })
       }
 
       if (format === 'svg') {
-        const svgs = indices.map((i) => exportPageToSVG(pages[i], design.width, design.height))
+        const svgs = indices.map((i) => exportPageToSVG(stripEmbeddedData(pages[i]), design.width, design.height)) // [VDS] idem
         if (svgs.length === 1) return textResult(svgs[0])
         return ok({ pages: indices.map((i, k) => ({ index: i, svg: svgs[k] })) })
       }
@@ -1074,17 +1076,16 @@ export function buildTools(deps: ToolDeps): ToolDef[] {
         for (const i of indices.slice(0, 3)) {
           // [VDS] embute as imagens /api/media (Uploads) e https, senão saíam em branco
           const svg = exportPageToSVG(await inlinePageImages(pages[i]), design.width, design.height)
-          const png = await sharp(Buffer.from(svg), { density: 96 })
-            .resize({ width: Math.min(2000, design.width), withoutEnlargement: design.width <= 2000 })
-            .png()
-            .toBuffer()
-          pngs.push({ index: i, data: png.toString('base64') })
+          // [VDS] pré-visualização leve (JPEG 800 px): o PNG em tamanho real chegava
+          // a 2,5 MB por página e o ChatGPT cortava a conversa
+          const preview = await previewJpeg(svg, design.width)
+          if (preview) pngs.push({ index: i, data: preview.toString('base64') })
         }
         const content: McpContent[] = [
-          ...pngs.map((p) => ({ type: 'image' as const, data: p.data, mimeType: 'image/png' })),
+          ...pngs.map((p) => ({ type: 'image' as const, data: p.data, mimeType: 'image/jpeg' })),
           {
             type: 'text' as const,
-            text: `PNG export of page${pngs.length > 1 ? 's' : ''} ${pngs.map((p) => p.index).join(', ')} (${design.width}x${design.height}). Rasterized server-side — fonts render with server-installed families.`,
+            text: `Preview of page${pngs.length > 1 ? 's' : ''} ${pngs.map((p) => p.index).join(', ')} (design ${design.width}x${design.height}, preview ${Math.min(PREVIEW_WIDTH, design.width)}px wide JPEG). Rasterized server-side with the installed fonts. For a full-quality PNG/JPG file use export_design_url.`,
           },
         ]
         return { content }
