@@ -39,6 +39,8 @@ import { buildVdsUploadTools } from '@/lib/vds/mcp-upload-tools'
 import { buildVdsPageTools } from '@/lib/vds/mcp-page-tools'
 import { buildVdsResizeTools } from '@/lib/vds/mcp-resize-tools'
 import { buildVdsArrangeTools } from '@/lib/vds/mcp-arrange-tools'
+import { buildVdsRulesTools } from '@/lib/vds/mcp-rules-tools'
+import { newDesignFolder, writeGuard } from '@/lib/vds/write-folder'
 import { inlinePageImages } from '@/lib/vds/export-link'
 import { PREVIEW_WIDTH, previewJpeg, stripEmbeddedData } from '@/lib/vds/mcp-compact'
 import { isOwnerFontFamily, loadOwnerFontFamilies } from '@/lib/vds/owner-fonts'
@@ -441,6 +443,9 @@ export function buildTools(deps: ToolDeps): ToolDef[] {
       },
     },
     handler: async (args) => {
+      // [VDS] o design novo nasce na pasta de escrita (CANVIX_MCP_WRITE_FOLDER)
+      const target = await newDesignFolder()
+      if ('error' in target) return fail(target.error)
       const name = asString(args.name, 'Agent design').slice(0, 80) || 'Agent design'
       const templateRef = asString(args.template_id, '')
       if (templateRef) {
@@ -452,6 +457,7 @@ export function buildTools(deps: ToolDeps): ToolDef[] {
         const design = await db.design.create({
           data: {
             ownerId: await getMcpOwnerId(), // [VDS]
+            folderId: target.folderId, // [VDS]
             name,
             width: template.width,
             height: template.height,
@@ -464,7 +470,7 @@ export function buildTools(deps: ToolDeps): ToolDef[] {
       const width = clamp(asInt(args.width, 1080), 40, 8000)
       const height = clamp(asInt(args.height, 1080), 40, 8000)
       const design = await db.design.create({
-        data: { ownerId: await getMcpOwnerId() /* [VDS] */, name, width, height, pages: [createPage()] as unknown as object, source: 'mcp' },
+        data: { ownerId: await getMcpOwnerId() /* [VDS] */, folderId: target.folderId /* [VDS] */, name, width, height, pages: [createPage()] as unknown as object, source: 'mcp' },
       })
       return ok({ design_id: design.id, name, width, height, pageCount: 1, editUrl: editUrl(design.id, origin) })
     },
@@ -487,6 +493,9 @@ export function buildTools(deps: ToolDeps): ToolDef[] {
     handler: async (args) => {
       const query = asString(args.query).slice(0, 2000)
       if (query.length < 4) return fail('Provide a design brief ("query"), e.g. "Instagram post for a coffee shop launch — warm palette".')
+      // [VDS] o design gerado nasce na pasta de escrita (CANVIX_MCP_WRITE_FOLDER)
+      const target = await newDesignFolder()
+      if ('error' in target) return fail(target.error)
       const ctx = await getClientForSlot('text')
       if (!ctx) {
         await recordUsage('assistant', 'local', false).catch(() => undefined)
@@ -525,7 +534,7 @@ export function buildTools(deps: ToolDeps): ToolDef[] {
         const spec = normalizeGeneratedDesign(parsed, width, height)
         const name = (asString(args.name, '') || asString(parsed.name, 'Generated design')).slice(0, 80) || 'Generated design'
         const design = await db.design.create({
-          data: { ownerId: await getMcpOwnerId() /* [VDS] */, name, width: spec.width, height: spec.height, pages: spec.pages as unknown as object, source: 'ai:mcp' },
+          data: { ownerId: await getMcpOwnerId() /* [VDS] */, folderId: target.folderId /* [VDS] */, name, width: spec.width, height: spec.height, pages: spec.pages as unknown as object, source: 'ai:mcp' },
         })
         await recordUsage('assistant', 'zai', true)
         return ok({
@@ -552,6 +561,9 @@ export function buildTools(deps: ToolDeps): ToolDef[] {
     designId: string,
     fn: (pages: PageData[], width: number, height: number) => { pages: PageData[]; summary: Record<string, unknown> } | null
   ): Promise<ToolResult> {
+    // [VDS] só designs da pasta de escrita (CANVIX_MCP_WRITE_FOLDER)
+    const blocked = await writeGuard(designId)
+    if (blocked) return fail(blocked)
     const design = await getDesign(designId)
     if (!design) return fail(`Design "${designId}" was not found.`)
     const pages = parsePages(design)
@@ -1116,6 +1128,9 @@ export function buildTools(deps: ToolDeps): ToolDef[] {
       const designId = asString(args.design_id)
       const body = asString(args.body).slice(0, 500)
       if (!body.trim()) return fail('body must not be empty.')
+      // [VDS] comentar também é escrever: só na pasta de escrita
+      const blocked = await writeGuard(designId)
+      if (blocked) return fail(blocked)
       const design = await getDesign(designId)
       if (!design) return fail(`Design "${designId}" was not found.`)
       const pages = parsePages(design)
@@ -1316,6 +1331,7 @@ export function buildTools(deps: ToolDeps): ToolDef[] {
     commentOnDesign,
     listComments,
     listFonts,
+    ...buildVdsRulesTools(), // [VDS] get_usage_rules (regras da app)
     ...buildVdsFolderTools(), // [VDS] pastas
     ...buildVdsDesignTools(), // [VDS] duplicate_design
     ...buildVdsBrandTools(mutateDesign), // [VDS] list_brand_assets, add_brand_asset

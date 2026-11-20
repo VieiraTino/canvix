@@ -9,6 +9,7 @@
 import type { NextRequest } from 'next/server'
 import { buildTools, SERVER_VERSION, type ToolResult, type ToolDef } from './tools'
 import { rateLimit } from '@/lib/ai/provider'
+import { withVdsInstructions } from '@/lib/vds/remote-instructions' // [VDS] regras da app nas instructions
 
 export const SUPPORTED_PROTOCOL_VERSIONS = ['2025-03-26', '2024-11-05', '2025-06-18']
 export const DEFAULT_PROTOCOL_VERSION = '2025-03-26'
@@ -264,7 +265,7 @@ export async function handleMcpText(text: string, req: McpRequestContext): Promi
 
     switch (msg.method) {
       case 'initialize':
-        responses.push(handleInitialize(msg))
+        responses.push(await withVdsInstructions(handleInitialize(msg))) // [VDS]
         break
       case 'ping':
         responses.push({ jsonrpc: '2.0', id: msg.id ?? null, result: {} })

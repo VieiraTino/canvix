@@ -21,6 +21,17 @@ git log --oneline v0.23.1..vds
 - **MCP: `export_design_url`.** Links temporários assinados (HMAC, 15 min por
   omissão, 60 máx.) para o PNG/JPG de páginas de um design, com as fotos
   embutidas; rota `/api/vds/export`. Para o TryPost ir buscar a imagem.
+- **MCP: pasta de escrita (`CANVIX_MCP_WRITE_FOLDER`).** Com o nome ou id
+  de uma pasta (ex.: `ChatGPT`): o MCP só edita, comenta e redimensiona
+  designs dessa pasta; criar, gerar, duplicar e redimensionar para cópia
+  põem o design novo lá; criar pastas e mover designs são recusados. Ler,
+  exportar e duplicar a partir de qualquer design continua livre. Pasta
+  inexistente = escritas recusadas. Vazio = sem restrição.
+- **MCP: regras da app.** As "Regras do Canvix" editadas na app interna
+  (Marketing > Agente) chegam ao agente nas `instructions` do `initialize` e
+  na ferramenta `get_usage_rules`. Lidas de `VDS_PROMPT_URL` com
+  `VDS_PROMPT_TOKEN` (cache de 5 minutos; se a api falhar, fica a última
+  versão boa). Sem estas variáveis, nada muda.
 - **MCP: `duplicate_design`.** Cópia independente de um design (ex.: um
   modelo), opcionalmente já dentro de uma pasta, sem tocar no original.
 - **MCP: Brand.** `list_brand_assets` (cores, paletas, fontes e logos dos

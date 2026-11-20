@@ -10,6 +10,7 @@
 import { db } from '@/lib/db'
 import { textResult, type ToolDef, type ToolResult } from '@/lib/mcp/tools'
 import { getMcpOwnerId } from './mcp-owner'
+import { folderChangesBlocked } from './write-folder'
 
 const MAX_FOLDERS = 50 // igual a /api/folders
 const MAX_NAME = 60
@@ -71,6 +72,9 @@ export function buildVdsFolderTools(): ToolDef[] {
       required: ['name'],
     },
     handler: async (args) => {
+      // com CANVIX_MCP_WRITE_FOLDER, as pastas são fixas
+      const blocked = await folderChangesBlocked()
+      if (blocked) return fail(blocked)
       const ownerId = await getMcpOwnerId()
       if (!ownerId) return fail(NO_OWNER)
       const name = sanitizeName(args.name)
@@ -97,6 +101,10 @@ export function buildVdsFolderTools(): ToolDef[] {
       required: ['design_id'],
     },
     handler: async (args) => {
+      // com CANVIX_MCP_WRITE_FOLDER, mover está desligado: trazer um design de
+      // fora para a pasta de escrita contornava a proteção dos originais
+      const blocked = await folderChangesBlocked()
+      if (blocked) return fail(blocked)
       const ownerId = await getMcpOwnerId()
       if (!ownerId) return fail(NO_OWNER)
       const designId = str(args.design_id)

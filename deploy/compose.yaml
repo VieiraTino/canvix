@@ -18,6 +18,11 @@ services:
       CANVIX_ADMIN_USERS: ${CANVIX_ADMIN_USERS}
       CANVIX_MCP_OWNER: ${CANVIX_MCP_OWNER}
       CANVIX_PUBLIC_URL: ${CANVIX_PUBLIC_URL}
+      # Única pasta onde o MCP escreve (nome ou id; vazio = sem restrição)
+      CANVIX_MCP_WRITE_FOLDER: ${CANVIX_MCP_WRITE_FOLDER:-}
+      # Regras do Canvix editadas na app interna (vazias = como antes)
+      VDS_PROMPT_URL: ${VDS_PROMPT_URL:-}
+      VDS_PROMPT_TOKEN: ${VDS_PROMPT_TOKEN:-}
     ports:
       - "127.0.0.1:8020:3000"
     volumes:

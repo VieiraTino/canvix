@@ -11,6 +11,7 @@
 import { db } from '@/lib/db'
 import { textResult, type ToolDef, type ToolResult } from '@/lib/mcp/tools'
 import { getMcpOwnerId } from './mcp-owner'
+import { newDesignFolder } from './write-folder'
 
 const MAX_NAME = 80 // igual ao create_design
 
@@ -63,6 +64,13 @@ export function buildVdsDesignTools(): ToolDef[] {
         if (!folder) {
           return fail(`Folder "${folderId || folderName}" was not found. Call list_folders, or create_folder first.`)
         }
+      }
+
+      // com CANVIX_MCP_WRITE_FOLDER, a cópia nasce sempre nessa pasta
+      const target = await newDesignFolder(folder?.id ?? null)
+      if ('error' in target) return fail(target.error)
+      if (target.folderId && target.folderId !== folder?.id) {
+        folder = await db.folder.findUnique({ where: { id: target.folderId }, select: { id: true, name: true } })
       }
 
       const name = (str(args.name) || `${original.name} (cópia)`).slice(0, MAX_NAME)

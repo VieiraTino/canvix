@@ -16,6 +16,7 @@ import { magicRelayoutPages } from '@/lib/magic'
 import type { PageData } from '@/lib/types'
 import { getMcpOwnerId } from './mcp-owner'
 import { fail, intArg, ok, str } from './mcp-shared'
+import { newDesignFolder, writeGuard } from './write-folder'
 
 const AGENT_ACTOR = 'agent:mcp' // igual ao tools.ts
 const MIN_PX = 32
@@ -79,6 +80,10 @@ export function buildVdsResizeTools(): ToolDef[] {
 
       const asCopy = args.as_copy !== false
       if (asCopy) {
+        // com CANVIX_MCP_WRITE_FOLDER a cópia nasce nessa pasta; sem ela, na do original
+        const target = await newDesignFolder()
+        if ('error' in target) return fail(target.error)
+        const copyFolderId = target.folderId ?? original.folderId
         const name = (str(args.name) || `${original.name} (${width}x${height})`).slice(0, MAX_NAME)
         const copy = await db.design.create({
           data: {
@@ -88,7 +93,7 @@ export function buildVdsResizeTools(): ToolDef[] {
             pages: relaid as unknown as object,
             source: `resize:${original.id}`,
             ownerId: original.ownerId ?? ownerId,
-            folderId: original.folderId,
+            folderId: copyFolderId,
           },
           select: { id: true, name: true },
         })
@@ -100,11 +105,14 @@ export function buildVdsResizeTools(): ToolDef[] {
           height,
           resized_from: original.id,
           from_size: `${original.width}x${original.height}`,
-          folder_id: original.folderId,
+          folder_id: copyFolderId,
           note: 'New design; the original is unchanged. Review text sizes and positions with get_design / export_design.',
         })
       }
 
+      // redimensionar no sítio é editar: só na pasta de escrita
+      const blocked = await writeGuard(original.id)
+      if (blocked) return fail(blocked)
       await db.design.update({
         where: { id: original.id },
         data: { width, height, pages: relaid as unknown as object, updatedAt: new Date() },
